@@ -1,7 +1,11 @@
 import * as ts from 'typescript';
 import {getAngularDecorators} from "./angular/decorators";
+import {NgQueryDefinition} from "./angular/query-definition";
 
-export class QueryAstVisitor {
+export class NgQueryResolveVisitor {
+
+  /** Resolved Angular query definitions. */
+  resolvedQueries: NgQueryDefinition[] = [];
 
   constructor(public typeChecker: ts.TypeChecker) {}
 
@@ -39,11 +43,18 @@ export class QueryAstVisitor {
     // Filter out all property declarations which declare Angular view/content queries.
     const queryProperties = propDeclarations
       .map(n => ({node: n, decorators: getAngularDecorators(this.typeChecker, n.decorators)}))
-      .filter(({decorators}) => decorators && decorators.some(d =>
-          d.name === 'ViewChild' || d.name === 'ContentChild'));
+      .filter(({decorators}) => !!decorators)
+      .map(({node, decorators}) => ({node, decorator: decorators.find(d =>
+          d.name === 'ViewChild' || d.name === 'ContentChild')}))
+      .filter(({decorator}) => !!decorator);
 
-
-
-    console.log(node.name.text, queryProperties.map(d => d.node.getText()));
+    // Collect all resolved queries and expose them on a public list of resolved queries..
+    queryProperties.forEach(query => {
+      this.resolvedQueries.push({
+        property: query.node,
+        decorator: query.decorator,
+        container: node,
+      })
+    });
   }
 }
