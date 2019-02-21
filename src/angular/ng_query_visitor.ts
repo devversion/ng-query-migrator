@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
-import {getAngularDecorators} from "./angular/decorators";
-import {NgQueryDefinition} from "./angular/query-definition";
+import {getAngularDecorators} from './decorators';
+import {NgQueryDefinition} from "./query-definition";
 
 export class NgQueryResolveVisitor {
 
@@ -56,5 +56,11 @@ export class NgQueryResolveVisitor {
         container: node,
       })
     });
+  }
+
+  static resolve(sourceFile: ts.SourceFile, typeChecker: ts.TypeChecker) {
+    const visitor = new NgQueryResolveVisitor(typeChecker);
+    visitor.visitNode(sourceFile);
+    return visitor;
   }
 }

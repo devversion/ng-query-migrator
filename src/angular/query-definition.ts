@@ -8,6 +8,6 @@ export interface NgQueryDefinition {
   /** Decorator that declares this as a query. */
   decorator: NgDecorator;
 
-  /** Container that holds this query. */
+  /** Class declaration that holds this query. */
   container: ts.ClassDeclaration;
 }
