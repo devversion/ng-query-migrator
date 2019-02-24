@@ -64,7 +64,10 @@ export class NgQueryResolveVisitor {
     }
 
     baseTypes.forEach(baseTypeIdentifier => {
-      const symbol = this.typeChecker.getSymbolAtLocation(baseTypeIdentifier);
+      // We need to resolve the value declaration through the resolved type as the base
+      // class could be declared in different source files and the local symbol won't
+      // contain a value declaration as the value is not declared locally.
+      const symbol = this.typeChecker.getTypeAtLocation(baseTypeIdentifier).getSymbol();
 
       if (!symbol || !symbol.valueDeclaration) {
         return;
@@ -79,11 +82,5 @@ export class NgQueryResolveVisitor {
 
     // Track all classes that derive from the given superclass.
     this.derivedClasses.set(superClass, existingInheritances.concat(node))
-  }
-
-  static resolve(sourceFile: ts.SourceFile, typeChecker: ts.TypeChecker) {
-    const visitor = new NgQueryResolveVisitor(typeChecker);
-    visitor.visitNode(sourceFile);
-    return visitor;
   }
 }

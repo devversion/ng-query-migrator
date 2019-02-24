@@ -1,8 +1,5 @@
 import {Component, ElementRef, OnInit, ViewChild} from "@angular/core";
-
-export class ParentQuery {
-  @ViewChild('testParent') testParent: ElementRef<HTMLElement>;
-}
+import {ParentQuery} from "./second-file";
 
 @Component({
   selector: 'app-home',

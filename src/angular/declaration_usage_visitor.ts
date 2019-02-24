@@ -55,7 +55,7 @@ export class DeclarationUsageVisitor {
       return true;
     }
 
-    // Handle new expressions that
+    // Handle new expressions that cause a jump in control flow.
     if (ts.isNewExpression(node) && this.visitNewExpression(node)) {
       this.visitedJumpExprSymbols.clear();
       return true;
