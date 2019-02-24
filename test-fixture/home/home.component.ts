@@ -3,10 +3,11 @@ import {ParentQuery} from "./second-file";
 
 @Component({
   selector: 'app-home',
-  template: '<span #mySpan>Home</span>'
+  template: '<span #mySpan #dynamic>Home</span>'
 })
 export class HomeComponent extends ParentQuery implements OnInit {
-  @ViewChild('mySpan') spanQuery: ElementRef<HTMLSpanElement>;
+  @ViewChild('mySpan', {read: 'existingProp'}) spanQuery: ElementRef<HTMLSpanElement>;
+  @ViewChild('dynamic', {}) dynamicQuery: ElementRef<HTMLElement>;
 
   ngOnInit() {
     this.spanQuery.nativeElement.addEventListener('click', () => {
@@ -14,6 +15,10 @@ export class HomeComponent extends ParentQuery implements OnInit {
     });
 
     this.test();
+  }
+
+  ngAfterViewInit() {
+    this.dynamicQuery.nativeElement.click();
   }
 
   test() {

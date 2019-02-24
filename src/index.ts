@@ -11,10 +11,11 @@ const host = ts.createCompilerHost(parsed.options, true);
 const program = ts.createProgram(parsed.fileNames, parsed.options, host);
 const typeChecker = program.getTypeChecker();
 const queryVisitor = new NgQueryResolveVisitor(typeChecker);
+const rootSourceFiles = program.getRootFileNames().map(f => program.getSourceFile(f));
+const printer = ts.createPrinter();
 
-program.getRootFileNames()
-  .map(fileName => program.getSourceFile(fileName))
-  .forEach(sourceFile => queryVisitor.visitNode(sourceFile));
+// Analyze source files by detecting queries and class relations.
+rootSourceFiles.forEach(sourceFile => queryVisitor.visitNode(sourceFile));
 
 const {resolvedQueries, derivedClasses} = queryVisitor;
 
@@ -25,7 +26,30 @@ derivedClasses.forEach((derivedClasses, classDecl) => {
 // Compute the query usage for all resolved queries.
 resolvedQueries.forEach(q => {
   const usage = analyzeNgQueryUsage(q, derivedClasses, typeChecker);
+  const queryExpr = q.decorator.node.expression as ts.CallExpression;
+  const queryArguments = queryExpr.arguments;
 
-  console.error(usage === QueryType.DYNAMIC ? 'dynamic' : 'static',
-      q.property.name.getText());
+  let optionsNode: ts.ObjectLiteralExpression;
+
+  // If the query decorator is already called with two arguments, then
+  // we need to update the existing object literal.
+  if (queryArguments.length === 2) {
+    optionsNode = queryArguments[1] as ts.ObjectLiteralExpression;
+
+    // In case the options already contain a property for the "static" flag, we just
+    // skip this query and leave it untouched.
+    if (optionsNode.properties.some(p => (ts.isIdentifier(p.name) || ts.isStringLiteralLike(p.name))
+      && p.name.text === 'static')) {
+      return;
+    }
+  } else {
+    optionsNode = ts.createObjectLiteral();
+  }
+
+  optionsNode = ts.updateObjectLiteral(optionsNode, optionsNode.properties.concat(
+    ts.createPropertyAssignment('static',
+        usage === QueryType.STATIC ? ts.createTrue() : ts.createFalse())));
+
+  console.log('Updated query options', printer.printNode(ts.EmitHint.Unspecified, optionsNode,
+      queryExpr.getSourceFile()));
 });
